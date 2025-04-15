@@ -17,7 +17,7 @@ async function main() {
     const micropip = pyodide.pyimport("micropip");
     await micropip.install('autograd');
 
-    let response = await fetch("https://github.com/calugo/Pyodide_wheels/blob/main/docs/dist/example_package_carlos-0.0.1.tar.gz");
+    let response = await fetch("dist/example_package_carlos-0.0.1.tar.gz");
     let buffer = await response.arrayBuffer();
 
     output.value += "Ready!\n";
