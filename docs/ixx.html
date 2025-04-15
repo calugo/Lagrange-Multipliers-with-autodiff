@@ -1,0 +1,31 @@
+<!doctype html>
+<html>
+  <head>
+    <!--script src="https://cdn.jsdelivr.net/pyodide/v0.27.5/full/pyodide.js"></script-->
+  </head>
+
+  <body>
+
+		<script type="importmap">
+			{
+			  "imports": {
+				"three": "https://cdn.jsdelivr.net/npm/three@0.171.0/build/three.module.js",
+				"three/addons/": "https://cdn.jsdelivr.net/npm/three@0.171.0/examples/jsm/",
+				"pyd": "https://cdn.jsdelivr.net/pyodide/v0.27.5/full/pyodide.js"
+			  }
+			}
+		</script>
+
+    <p>
+      You can execute any Python code. Just enter something in the box below and
+      click the button.
+    </p>
+    <input id="code" value="sum([1, 2, 3, 4, 5])" />
+    <button id="run">Run</button>
+    <br />
+    <br />
+    <div>Output:</div>
+    <textarea id="output" style="width: 100%;" rows="6" disabled></textarea>
+    <script type="module" src='pscript.js'></script>
+  </body>
+</html>
