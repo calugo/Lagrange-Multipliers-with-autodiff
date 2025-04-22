@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="en">
+	<head>
+		<title>three.js webgl - Constraints</title>
+		<meta charset="utf-8">
+		<meta name="viewport" content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0">
+		<link type="text/css" rel="stylesheet" href="main.css">
+
+		<style>
+			body {
+				font-family: Monospace;
+				background-color: #f0f0f0;
+				margin: 0px;
+				overflow: hidden;
+			}
+
+				#menu {
+				position: absolute;
+				bottom: 20px;
+				width: 100%;
+				text-align: center;
+				padding: 0;
+				margin: 0;
+			}
+
+				#topmenu {
+				position: absolute;
+				top: 10px;
+				right: 10px;
+				width: 100%;
+				text-align: right;
+				padding: 0;
+				margin: 0;
+			}
+				#statsbox, #infoBox{
+				position: absolute;
+				top: 50px;
+				width: 100%;
+				height: 6em;
+				background-color: #000000;
+				border: 1px solid black;
+				opacity:0.75;
+			  	filter:alpha(opacity=75);
+				padding: 0;
+				margin: 0;
+				font-size: 1em;
+				font-weight: bold;
+				/*color: rgba(127,255,255,0.75);*/
+				color: rgba(255,255,255,0.75);
+				text-shadow: 0 0 10px rgba(0,255,255,0.95);
+			}
+
+			button {
+				color: rgb(100,100,200);
+				background: transparent;
+				border: 0px;
+				padding: 5px 10px;
+				cursor: pointer;
+			}
+			button:hover {
+				background-color: rgba(0,255,255,0.5);
+			}
+			button:active {
+				color: #000000;
+				background-color: rgba(0,255,255,1);
+			}
+
+
+		</style>  
+		
+		<script src="https://cdn.jsdelivr.net/pyodide/v0.27.5/full/pyodide.js"></script>
+
+        <script type="module" src="https://pyscript.net/releases/2024.1.1/core.js"></script>
+
+	</head>
+
+	<body>
+
+		<div id="info" style="color:#40B3DF;">'Initializing....'</div>
+		<script type="importmap">
+			{
+			  "imports": {
+				"three": "https://cdn.jsdelivr.net/npm/three@0.175.0/build/three.module.js",
+				"three/addons/": "https://cdn.jsdelivr.net/npm/three@0.171.0/examples/jsm/",
+				"stats-gl": "https://cdn.jsdelivr.net/npm/stats-gl@3.6.0/dist/main.js"
+			  }
+			}
+		</script>
+
+	  <div id="RUN"></div>
+		
+    	<script type="module" src='3dscript.js'></script>
+	</body>
+
+</html>
