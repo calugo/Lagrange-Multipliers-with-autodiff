@@ -6,7 +6,6 @@ import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 import { GUI } from 'three/addons/libs/lil-gui.module.min.js';
 
 
-let container;
 let camera, scene, renderer;
 let gui;
 let stats;
@@ -24,7 +23,7 @@ const playtime = 'Play t: ';
 
 
 let dotSolMat = new THREE.PointsMaterial(
-          {opacity:0.5, size: 0.025, color: 0xc1f211, transparent: true});
+          {opacity:0.75, size: 0.025, color: 0xc1f211, transparent: true});
 
 let dotMaterial = new THREE.PointsMaterial({ size: 0.05, color: 0xff0000 });
 
@@ -38,10 +37,11 @@ pyodideRuntime.runPython(await (await fetch("integrals.py")).text());
 
 let pyparaboloid = pyodideRuntime.globals.get('paraboloid');
 let pyplane = pyodideRuntime.globals.get('plane');
+let pywave = pyodideRuntime.globals.get('wave');
 let RK = pyodideRuntime.globals.get('RK');
 
 statusmsg = document.getElementById('info');
-statusmsg.innerText='Ready';
+statusmsg.innerText='Ready \n Plane:Ax+By, Paraboloid: Ax^2+By^2, Wave:0.2*(x^2+y^2)*cos(Ax^2+By^2) ';
 
 //init();
 
@@ -49,12 +49,11 @@ function init(){
 
         A = 0.0;
         B = 0.0;
-        xp = 0.95;
-        yp = -0.95;
+        xp = 0.4;
+        yp = -0.2;
         zp = 0.0;
         tf = 1.0;
 
-        container = document.getElementById( 'container' );
 				scene = new THREE.Scene();
         scene.background = new THREE.Color( 0x222222 );
 				//scene.background = new THREE.Color( 0xf0f0f0 );
@@ -76,10 +75,9 @@ function init(){
 				light.shadow.mapSize.height = 1024;
 				scene.add( light );
 
-				planeGeometry = new THREE.PlaneGeometry( 3, 3 , 20, 20);
+				planeGeometry = new THREE.PlaneGeometry( 3, 3 , 40, 40);
 				planeGeometry.rotateX( - Math.PI / 2 );
-				const planeMaterial = new THREE.MeshBasicMaterial( { color: 0x00ffff, opacity: 0.2, side: THREE.DoubleSide, wireframe: true } );
-				//const planeMaterial = new THREE.MeshBasicMaterial( { color: 0x0000ff, opacity: 0.6, side: THREE.DoubleSide} );
+				const planeMaterial = new THREE.MeshBasicMaterial( { color: 0x00ffff, opacity: 0.2, side: THREE.DoubleSide, wireframe: true, transparent: true } );
         plane = new THREE.Mesh( planeGeometry, planeMaterial );
         planepos = planeGeometry.getAttribute('position');
 				plane.receiveShadow = true;
@@ -159,16 +157,18 @@ function initGui(){
   gui =  new GUI();
 
   const param = {
+    'xo':xp,
+    'yo':yp,
     'A':A,
     'B':B,
     'Case': 0,
-    'T': tf,
+    'Time': tf,
     'Run': Runpy,
     'Plot': Play
   };
 
 
-  gui.add( param, 'Case', { 'plane': 0, 'paraboloid': 1 } ).onChange( function ( val ) {
+  gui.add( param, 'Case', { 'plane': 0, 'paraboloid': 1, 'wave': 2 } ).onChange( function ( val ) {
 
 		switch ( val ) {
 				case 0:
@@ -184,8 +184,36 @@ function initGui(){
           if(playflag){rem_solution();}
           transformplane(plot_case);
 					break;
+
+        case 2:
+          plot_case = 'wave';
+          if(playflag){rem_solution();}
+          transformplane(plot_case);
+          break;
         }
 				});
+
+  gui.add( param, 'xo', -1.5, 1.5, 0.01 ).onChange( function ( val ) {
+    //console.log('A');
+    if(playflag){rem_solution();}
+      prt.position.x = val;
+      xp = prt.position.x;
+      yp = prt.position.z;
+
+      transformplane(plot_case);
+    } );
+
+  gui.add( param, 'yo', -1.5, 1.5, 0.01 ).onChange( function ( val ) {
+    //console.log('A');
+    if(playflag){rem_solution();}
+      prt.position.z= val;
+      xp = prt.position.x;
+      yp = prt.position.z;
+
+      transformplane(plot_case);
+    } );
+
+
 
   gui.add( param, 'A', 0.0, 5, 0.01 ).onChange( function ( val ) {
     //console.log('A');
@@ -202,7 +230,7 @@ function initGui(){
     } );
   
 
-    gui.add( param, 'T', 0.5, 50.0, 0.5 ).onChange( function ( val ) {
+    gui.add( param, 'Time', 0.5, 50.0, 0.5 ).onChange( function ( val ) {
     //console.log('A');
      tf = val;
     } );
@@ -232,21 +260,6 @@ function Runpy(){
   console.log(Rt);
 
 }
-//function Runpy(){
-
-//  setIntTitle('Integrating');
-  
- // if(playflag){rem_solution();}
-
-//  xp = prt.position.x;
- // yp = prt.position.z;
- // zp = prt.position.y;
-//  Rt = RK(tf,[xp,yp,zp],plot_case,1e-2,A,B);
-//  play_button.disable(false);
-//  console.log(Rt);
-//  setIntTitle('Done');
-//}
-
 
 function Play(){
 
@@ -272,6 +285,7 @@ function transformplane(shape){
 
   if (shape == 'paraboloid'){
     n=2;
+    
     prt.position.y = pyparaboloid(A,B,xp,yp);
   }
 
@@ -280,11 +294,22 @@ function transformplane(shape){
     prt.position.y = pyplane(A,B,xp,yp);
   }
 
+  if (shape == 'wave'){
+    n=2;
+    prt.position.y = pywave(A,B,xp,yp);
+  }
+
   for (let i= 0; i < planepos.count;i++){
       vertex.fromBufferAttribute( planepos, i ); // read vertex
-      vertex.y = A*vertex.x**n+B*vertex.z**n;//+B*vertex.y;
+      if ((shape == 'paraboloid') || (shape == 'plane')) { 
+        vertex.y = A*vertex.x**n+B*vertex.z**n;//+B*vertex.y;
+      }
+      if (shape == 'wave'){
+        vertex.y = 0.2*(vertex.x**n+vertex.z**n)*Math.cos(A*vertex.x**n + B*vertex.z**n);
+      }
       planepos.setXYZ( i, vertex.x, vertex.y, vertex.z ); // 
       }
+  //prt.position.needsUpdate = true;
   planepos.needsUpdate = true;
   render();
 }
