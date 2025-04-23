@@ -9,17 +9,22 @@ def plane(a,b,x,y):
 def paraboloid(a,b,x,y):
     return a*x*x + b*y*y
 
+def wave(a,b,x,y):
+    return 0.2*(x*x+y*y)*np.cos(a*x*x+b*y*y)
+
 
 def kn(r,pars,case):
     a = pars[0]
     b = pars[1]
     g = 10
-    if case in ['plane','paraboloid']:
+    if case in ['plane','paraboloid','wave']:
         
         if case == 'plane':
             fn = plane
         if case == 'paraboloid':
             fn = paraboloid
+        if case == 'wave':
+            fn = wave
         
         x = r[0]; y = r[1]; z = r[2]
         vx = r[3]; vy =r[4]; vz= r[5]
@@ -32,7 +37,11 @@ def kn(r,pars,case):
         
         fxx = grad(grad(fn,2),2)(a,b,x,y)
         fyy = grad(grad(fn,3),3)(a,b,x,y)
-        ddg = np.array([fxx*vx*vx,fyy*vy*vy,g])
+
+        fxy = grad(grad(fn,2),3)(a,b,x,y)
+        fyx = grad(grad(fn,3),2)(a,b,x,y)
+
+        ddg = np.array([fxx*vx*vx,fyy*vy*vy,g,vx*vy*(fxy+fyx)])
         Num = np.sum(ddg)
         Den = dg2
         A = Num/dg2
