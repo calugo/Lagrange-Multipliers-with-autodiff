@@ -249,11 +249,9 @@ function setIntTitle(title){
 
 function Ronpy(){
  setIntTitle('Integrating');
- //status = true;
  setTimeout(function(){
   Runpy();
  },10);
- //Ronpy();
 }
 
 
@@ -266,10 +264,8 @@ function Runpy(){
   zp = prt.position.y;
   Rt = RK(tf,[xp,yp,zp],plot_case,1e-2,A,B);
   play_button.disable(false);
-  //setIntTitle('Done!')
   statusmsg.innerText='Ready \n Plane:Ax+By, Paraboloid: Ax^2+By^2, Wave:0.2*(x^2+y^2)*cos(Ax^2+By^2) ';
   console.log(Rt);
-  //status = false;
 }
 
 function Play(){
