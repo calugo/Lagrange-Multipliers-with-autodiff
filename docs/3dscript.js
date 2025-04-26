@@ -56,7 +56,6 @@ function init(){
 
 				scene = new THREE.Scene();
         scene.background = new THREE.Color( 0x222222 );
-				//scene.background = new THREE.Color( 0xf0f0f0 );
 				camera = new THREE.PerspectiveCamera( 70, window.innerWidth / window.innerHeight, 0.01, 10000 );
 
 				camera.position.set( 0, 2, 2 );
@@ -138,8 +137,9 @@ function add_solution(jn, rn){
 }
 
 function render() {
+    //console.log(status);
 
-  renderer.render(scene, camera);
+    renderer.render(scene, camera);
 }
 
 function onWindowResize() {
@@ -163,7 +163,7 @@ function initGui(){
     'B':B,
     'Case': 0,
     'Time': tf,
-    'Run': Runpy,
+    'Run': Ronpy,
     'Plot': Play
   };
 
@@ -244,11 +244,20 @@ function initGui(){
 
 function setIntTitle(title){
   statusmsg.innerText = title;
+  
+}
+
+function Ronpy(){
+ setIntTitle('Integrating');
+ //status = true;
+ setTimeout(function(){
+  Runpy();
+ },10);
+ //Ronpy();
 }
 
 
 function Runpy(){
-
 
   if(playflag){rem_solution();}
 
@@ -257,8 +266,10 @@ function Runpy(){
   zp = prt.position.y;
   Rt = RK(tf,[xp,yp,zp],plot_case,1e-2,A,B);
   play_button.disable(false);
+  //setIntTitle('Done!')
+  statusmsg.innerText='Ready \n Plane:Ax+By, Paraboloid: Ax^2+By^2, Wave:0.2*(x^2+y^2)*cos(Ax^2+By^2) ';
   console.log(Rt);
-
+  //status = false;
 }
 
 function Play(){
