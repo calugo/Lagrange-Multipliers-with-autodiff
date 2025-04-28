@@ -44,7 +44,4 @@ The code is the same as the one provided here.
 
 Please do not forget to visit the details describe in the [site](https://calugo.github.io/posts/constraints-in-mechanics-and-automatic-differentiation./)
 
-As well as the documentation of [autograd](https://github.com/HIPS/autograd) and [Pyodide](https://pyodide.org/en/stable/)
-
-
-
+As well as the documentation of [Autograd](https://github.com/HIPS/autograd) and [Pyodide](https://pyodide.org/en/stable/)
