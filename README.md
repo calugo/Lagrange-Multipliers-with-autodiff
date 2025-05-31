@@ -1,4 +1,4 @@
-# Codes to carry out the simulations of motions over a surface using autugrad and Lagrange multipliers.
+# Codes to carry out the simulations of motions over a surface using autograd and Lagrange multipliers.
 
 
 ![Number of Species](assets/Par2x.gif)
