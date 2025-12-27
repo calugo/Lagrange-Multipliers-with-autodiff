@@ -42,6 +42,6 @@ A live web-version running the code can be found if you click on the image below
 
 The code is the same as the one provided here. 
 
-Please do not forget to visit the details described in the [website](https://calugo.github.io/posts/constraints-in-mechanics-and-automatic-differentiation./)
+Please do not forget to check the details described in the [website](https://calugo.github.io/posts/constraints-in-mechanics-and-automatic-differentiation./)
 
 As well as the documentation of [Autograd](https://github.com/HIPS/autograd) and [Pyodide](https://pyodide.org/en/stable/)
