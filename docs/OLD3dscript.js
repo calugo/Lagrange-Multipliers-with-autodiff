@@ -1,29 +1,31 @@
+
 import * as THREE from 'three';
+import Stats from 'stats-gl';
+
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 import { GUI } from 'three/addons/libs/lil-gui.module.min.js';
 
 
 let camera, scene, renderer;
 let gui;
+let stats;
 let A, B, plot_case='plane';
 let tf;
-let plane, planeGeometry,prt,prtx;
+let plane, planeGeometry,prt;
 let planepos,xp,yp,zp;
 let dotGeometry,DotGeo,pt;
 let status = false;
 let statusmsg; 
-let Rt,n,ikn;
-let plot_button;
+let Rt,n;
 let play_button;
 let playflag = false;
-
+const playtime = 'Play t: ';
 
 
 let dotSolMat = new THREE.PointsMaterial(
           {opacity:0.75, size: 0.025, color: 0xc1f211, transparent: true});
 
 let dotMaterial = new THREE.PointsMaterial({ size: 0.05, color: 0xff0000 });
-let dotMaterialx = new THREE.PointsMaterial({ size: 0.05, color: 0x4169e1 });
 
 init()
 
@@ -38,10 +40,10 @@ let pyplane = pyodideRuntime.globals.get('plane');
 let pywave = pyodideRuntime.globals.get('wave');
 let RK = pyodideRuntime.globals.get('RK');
 
-//init()
-
 statusmsg = document.getElementById('info');
 statusmsg.innerText='Ready \n Plane:Ax+By, Paraboloid: Ax^2+By^2, Wave:0.2*(x^2+y^2)*cos(Ax^2+By^2) ';
+
+//init();
 
 function init(){
 
@@ -52,33 +54,33 @@ function init(){
         zp = 0.0;
         tf = 1.0;
 
-        scene = new THREE.Scene();
+				scene = new THREE.Scene();
         scene.background = new THREE.Color( 0x222222 );
-        
-        camera = new THREE.PerspectiveCamera( 70, window.innerWidth / window.innerHeight, 0.01, 10000 );
-        camera.position.set( 0, 2, 2 );
-        scene.add( camera );
-        scene.add( new THREE.AmbientLight( 0xf0f0f0, 3 ) );
+				camera = new THREE.PerspectiveCamera( 70, window.innerWidth / window.innerHeight, 0.01, 10000 );
 
-        const light = new THREE.SpotLight( 0xffffff, 4.5 );
-        light.position.set( 0, 1500, 200 );
-        light.angle = Math.PI * 0.2;
-        light.decay = 0;
-        light.castShadow = true;
-        light.shadow.camera.near = 200;
-        light.shadow.camera.far = 2000;
-        light.shadow.bias = - 0.000222;
-        light.shadow.mapSize.width = 1024;
-        light.shadow.mapSize.height = 1024;
-        scene.add( light );
+				camera.position.set( 0, 2, 2 );
+				scene.add( camera );
 
-        planeGeometry = new THREE.PlaneGeometry( 3, 3 , 40, 40);
-        planeGeometry.rotateX( - Math.PI / 2 );
-        const planeMaterial = new THREE.MeshBasicMaterial( { color: 0x00ffff, opacity: 0.2, side: THREE.DoubleSide, wireframe: true, transparent: true } );
+				scene.add( new THREE.AmbientLight( 0xf0f0f0, 3 ) );
+				const light = new THREE.SpotLight( 0xffffff, 4.5 );
+				light.position.set( 0, 1500, 200 );
+				light.angle = Math.PI * 0.2;
+				light.decay = 0;
+				light.castShadow = true;
+				light.shadow.camera.near = 200;
+				light.shadow.camera.far = 2000;
+				light.shadow.bias = - 0.000222;
+				light.shadow.mapSize.width = 1024;
+				light.shadow.mapSize.height = 1024;
+				scene.add( light );
+
+				planeGeometry = new THREE.PlaneGeometry( 3, 3 , 40, 40);
+				planeGeometry.rotateX( - Math.PI / 2 );
+				const planeMaterial = new THREE.MeshBasicMaterial( { color: 0x00ffff, opacity: 0.2, side: THREE.DoubleSide, wireframe: true, transparent: true } );
         plane = new THREE.Mesh( planeGeometry, planeMaterial );
         planepos = planeGeometry.getAttribute('position');
-        plane.receiveShadow = true;
-        scene.add( plane );
+				plane.receiveShadow = true;
+				scene.add( plane );
 
 
         dotGeometry = new THREE.BufferGeometry();
@@ -90,60 +92,66 @@ function init(){
         prt.position.y = zp;
         scene.add(prt);
 
-        prtx = new THREE.Points(dotGeometry, dotMaterialx);
-        prtx.position.x = xp;
-        prtx.position.z = yp;
-        prtx.position.y = zp;
-        prtx.visible = false;
-        scene.add(prtx)
-
         const axesHelper = new THREE.AxesHelper( 2 );
         scene.add( axesHelper );
 
-    
-        initGui();
-    
-        renderer = new THREE.WebGLRenderer( { antialias: true } );
-	    renderer.setPixelRatio( window.devicePixelRatio );
-	    renderer.setSize( window.innerWidth, window.innerHeight );
-	    renderer.setAnimationLoop( animate );
-	    document.body.appendChild( renderer.domElement );
+	      renderer = new THREE.WebGLRenderer( { antialias: true } );
+				renderer.setPixelRatio( window.devicePixelRatio );
+				renderer.setSize( window.innerWidth, window.innerHeight );
+				renderer.shadowMap.enabled = true;
+        document.body.appendChild( renderer.domElement );
 
         // Controls
-        const controls = new OrbitControls( camera, renderer.domElement );
-        controls.damping = 0.2;
+				const controls = new OrbitControls( camera, renderer.domElement );
+				controls.damping = 0.2;
+				controls.addEventListener( 'change', render );
 
-	    window.addEventListener( 'resize', onWindowResize );
-    }
+        window.addEventListener( 'resize', onWindowResize );
+        onWindowResize();
 
+        initGui();
+        render();
+        
+}
 
-function animate() {
+function rem_solution(){
+  let kn = 0;
+  while(kn<Rt.length){
+    let pn = scene.getObjectByName(kn);
+    scene.remove(pn);
+    kn++;
+  }
+  render();
+  playflag = false;
+}
 
-        if (status == true){
-            prtx.position.x = Rt[ikn][1]
-            prtx.position.y = Rt[ikn][3]
-            prtx.position.z = Rt[ikn][2]
-            if(ikn==0){prtx.visible=true;}
-            prtx.needsUpdate = true;
-            ikn+=1
+function add_solution(jn, rn){
+        DotGeo = new THREE.BufferGeometry();
+        DotGeo.setAttribute('position', new THREE.BufferAttribute(new Float32Array([0,0,0]), 3));
+        pt = new THREE.Points(dotGeometry, dotSolMat);
+        pt.position.x = rn[1];
+        pt.position.z = rn[2];
+        pt.position.y = rn[3];
+        pt.name = jn;
+        scene.add(pt);
+}
 
-            if (ikn==(Rt.length-1)) {
-                status = false
-            } 
-        }
-		renderer.render( scene, camera );
-        //console.log("PIPI")
-	}
+function render() {
+    //console.log(status);
 
+    renderer.render(scene, camera);
+}
 
 function onWindowResize() {
 
-    camera.aspect = window.innerWidth / window.innerHeight;
-    camera.updateProjectionMatrix();
-    renderer.setSize( window.innerWidth, window.innerHeight );
-      
-    }
-      
+  camera.aspect = window.innerWidth / window.innerHeight;
+  camera.updateProjectionMatrix();
+  renderer.setSize( window.innerWidth, window.innerHeight );
+  render();
+
+}
+
+
 function initGui(){
 
   gui =  new GUI();
@@ -156,27 +164,26 @@ function initGui(){
     'Case': 0,
     'Time': tf,
     'Run': Ronpy,
-    'Plot': Plot,
-    'Play': Play
+    'Plot': Play
   };
 
 
   gui.add( param, 'Case', { 'plane': 0, 'paraboloid': 1, 'wave': 2 } ).onChange( function ( val ) {
 
-        switch ( val ) {
-                case 0:
-                    //console.log('plane');
+		switch ( val ) {
+				case 0:
+					//console.log('plane');
           plot_case = 'plane';
           if(playflag){rem_solution();}
           transformplane(plot_case);
-                    break;
+					break;
 
-                case 1:
-                    //console.log('paraboloid')
+				case 1:
+					//console.log('paraboloid')
           plot_case = 'paraboloid';
           if(playflag){rem_solution();}
           transformplane(plot_case);
-                    break;
+					break;
 
         case 2:
           plot_case = 'wave';
@@ -184,7 +191,7 @@ function initGui(){
           transformplane(plot_case);
           break;
         }
-                });
+				});
 
   gui.add( param, 'xo', -1.5, 1.5, 0.01 ).onChange( function ( val ) {
     //console.log('A');
@@ -223,20 +230,15 @@ function initGui(){
     } );
   
 
-    gui.add( param, 'Time', 0.5, 25.0, 0.5 ).onChange( function ( val ) {
+    gui.add( param, 'Time', 0.5, 50.0, 0.5 ).onChange( function ( val ) {
     //console.log('A');
-    if(playflag){rem_solution();}
-    tf = val;
-    transformplane(plot_case);
-
+     tf = val;
     } );
 
   gui.add(param,'Run');
 
 
-  plot_button = gui.add(param,'Plot').disable();
-  
-  play_button = gui.add(param,'Play').disable();
+  play_button = gui.add(param,'Plot').disable();
 
 }
 
@@ -245,78 +247,42 @@ function setIntTitle(title){
   
 }
 
-function rem_solution(){
-    let kn = 0;
-    while(kn<Rt.length){
-      let pn = scene.getObjectByName(kn);
-      scene.remove(pn);
-      kn++;
-    }
-    //render();
-    playflag = false;
-  }
-
-function add_solution(jn, rn){
-        DotGeo = new THREE.BufferGeometry();
-        DotGeo.setAttribute('position', new THREE.BufferAttribute(new Float32Array([0,0,0]), 3));
-        pt = new THREE.Points(dotGeometry, dotSolMat);
-        pt.position.x = rn[1];
-        pt.position.z = rn[2];
-        pt.position.y = rn[3];
-        pt.name = jn;
-        scene.add(pt);
-}
-
-
 function Ronpy(){
-
-    play_button.disable();
-    plot_button.disable();
-    transformplane(plot_case);
-    setIntTitle('Integrating');
-   
-    setTimeout(function(){
-     Runpy();
-    },50);
-   }
-
-function Play(){
-  status = true;
-  ikn = 0;
-  console.log('play')
+ setIntTitle('Integrating');
+ setTimeout(function(){
+  Runpy();
+ },10);
 }
+
 
 function Runpy(){
 
-  if(playflag){
-    rem_solution();
-    }
+  if(playflag){rem_solution();}
 
   xp = prt.position.x;
   yp = prt.position.z;
   zp = prt.position.y;
   Rt = RK(tf,[xp,yp,zp],plot_case,1e-2,A,B);
   play_button.disable(false);
-  plot_button.disable(false);
   statusmsg.innerText='Ready \n Plane:Ax+By, Paraboloid: Ax^2+By^2, Wave:0.2*(x^2+y^2)*cos(Ax^2+By^2) ';
+  console.log(Rt);
 }
 
+function Play(){
 
-function Plot(){
-
-    if (playflag == false){
-      let jn =0;
-      while(jn<Rt.length){
-        add_solution(jn,Rt[jn])
-        jn++;
-      }
-      playflag = true;
-      plot_button.disable();
-      //play_button.disable();
-  
+  if (playflag == false){
+    let jn =0;
+    while(jn<Rt.length){
+      add_solution(jn,Rt[jn])
+      jn++;
     }
-  
+    render();
+    playflag = true;
+    play_button.disable();
+
   }
+
+}
 
 function transformplane(shape){
   
@@ -324,8 +290,6 @@ function transformplane(shape){
   const vertex = new THREE.Vector3();
   let  n ;
 
-  prtx.visible =false
-  play_button.disable()
   if (shape == 'paraboloid'){
     n=2;
     
@@ -354,6 +318,5 @@ function transformplane(shape){
       }
   //prt.position.needsUpdate = true;
   planepos.needsUpdate = true;
+  render();
 }
-
-
